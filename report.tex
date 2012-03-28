@@ -1,0 +1,113 @@
+\documentclass[runningheads,a4paper]{report}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{xcolor}
+
+\lstnewenvironment{code}
+    {\lstset{%
+        basicstyle=\ttfamily,
+        escapechar=~,
+        morekeywords={foo,bar},
+        keywordstyle=\color{green},
+        literate={>}{{\textcolor{blue}{>}}}1}
+    }
+    {}
+
+\lstnewenvironment{codeoutput}
+    {\lstset{basicstyle=\ttfamily\color{black}}}
+    {}
+
+
+\lstset{breaklines=true}
+
+
+% Title Page
+\title{CG2271 RTOS Lab 7 --- Processes in Unix}
+\author{Divyanshu Arora(U096857U), Omer Iqbal(MATRIC\_NO\_HERE)}
+
+
+\begin{document}
+\maketitle
+\lstset{language=C,
+  label=Output, numbers=left, frame=shadowbox,
+  rulesepcolor=\color{black}, numberstyle=\color{gray}}
+\section*{Q1}
+
+\subsection*{PID}
+
+A \texttt{PID}, or a \textit{process identifier}, is a number used by
+OS kernels to uniquely identify a process.
+
+Since they are unique, they are used in calls to functions (syscalls,
+or any other commands that wrap around them, \texttt{renice} for
+instance) to identify \& operate on processes.
+
+\subsection*{Identifying Parent process's parent}
+
+We can use the \texttt{getppid()} syscall to obtain the
+\texttt{pid\_t} (a typedef to \textit{int} on most system)
+representation of the pid of the
+invoking process's parent.
+
+Therefore, we modify our program to be---
+\lstset{caption=Adding a getppid() call, language=inform}
+\begin{lstlisting}
+  //[...]
+  if ((pid=fork()))
+    {
+      printf("Process ID of parent's parent: %d\n", getppid());
+      printf("Process ID of child: %d\n", pid);
+      //[...]
+\end{lstlisting}
+
+
+On a sample run, we obtain the output---
+\lstset{caption=Sample output, rulecolor=\color{black}}
+\begin{codeoutput}
+Process ID of parent's parent: 6246
+Process ID of child: 15252
+Parent: i=0 k=15
+[truncated for brevity]
+\end{codeoutput}
+
+Some noob shell-fu later, we find the parent's name, its ppid, age, sex etc. The shell command was later arrested on charges of stalking. emacs had to go into witness protection. What a life.
+\lstset{caption=Exhibit `A'}
+\begin{code}
+--- lab7 (master) > ps aux | grep 6246
+div    6246  0.7  0.2 387020 41236 pts/3    Sl+  02:20   0:08 emacs
+\end{code}
+
+\section*{Q2}
+
+The values of \textit{k} printed by the parent and the child are independent.
+
+This is because the \texttt{fork()} call creates a copy of the parent's context for the child (well, technically, the copy is made later owing to copy-on-write optimizations). As such, when the parent increments \textit{k}, it doesn't affect the copy of \textit{k} held by the child.
+
+\section*{Q3}
+
+The output \textit{can} become mixed because when the parent (or the child) sleeps, the OS scheduler is not restricted from scheduling the other process for execution.
+
+The child process continues to execute after the parent process completes. This is because on \textit{GNU/Linux},the system I'm using, child processes aren't killed when their parent exits. Instead, typically, the \texttt{init} process (pid 1) will take over parental duties for the process, and will reap its exit code.
+
+\section*{Q4}
+
+Added a \texttt{wait()} call to the \textit{parent}'s code.
+
+\lstset{caption=git-diff of changes}
+\lstinputlisting{q4.diff}
+
+\section*{Q5}
+
+The program forks off a child, which prints a message containing 2 variables populated by reading a pipe from the parent process.
+
+\section*{Q6}
+
+The \texttt{sizeof()} function returns a value of type \texttt{size\_t} that represents the number of bytes used to store the variable (or type) that was supplied as an argument.
+
+\section*{Q7}
+
+\lstset{caption=Using parent and a child to count the primes among randomly generated numbers, language=C}
+\lstinputlisting{lab7c.c}
+
+
+\end{document}

@@ -1,0 +1,20 @@
+diff --git a/lab7a.c b/lab7a.c
+index 2e64608..fd3d727 100644
+--- a/lab7a.c
++++ b/lab7a.c
+@@ -1,5 +1,6 @@
+ #include <stdio.h>
+ #include <unistd.h>
++#include <sys/wait.h>
+ 
+ #define PARENT_DELAY 1
+ #define CHILD_DELAY 2
+@@ -20,6 +21,8 @@ int main()
+           // Delay
+           sleep(PARENT_DELAY);
+         }
++      if (wait(&status) == -1)
++        return -1;
+     }
+   else
+     {
